@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Jarvis Cards Updater",
+        "description": "Enter your JustSmart/Jarvis license key. The updater only downloads licensed Jarvis Cards releases from updates.justsmart.at.",
+        "data": {
+          "license_key": "License key",
+          "update_url": "Update server URL",
+          "channel": "Update channel"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the Jarvis update server.",
+      "invalid_license": "The license key is invalid, inactive, or expired.",
+      "unknown": "Unexpected error. Check Home Assistant logs."
+    },
+    "abort": {
+      "already_configured": "Jarvis Cards Updater is already configured."
+    }
+  }
+}

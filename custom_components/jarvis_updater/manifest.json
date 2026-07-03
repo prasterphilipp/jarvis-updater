@@ -1,0 +1,11 @@
+{
+  "domain": "jarvis_updater",
+  "name": "Jarvis Cards Updater",
+  "codeowners": ["@prasterphilipp"],
+  "config_flow": true,
+  "documentation": "https://github.com/prasterphilipp/jarvis-updater",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/prasterphilipp/jarvis-updater/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
