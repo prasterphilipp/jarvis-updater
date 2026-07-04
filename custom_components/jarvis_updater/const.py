@@ -7,10 +7,11 @@ CONF_CHANNEL = "channel"
 DEFAULT_UPDATE_URL = "https://updates.justsmart.at"
 DEFAULT_CHANNEL = "stable"
 
-PLATFORMS = ["update", "button", "sensor"]
+PLATFORMS = ["update", "button", "sensor", "select"]
 
 STORAGE_VERSION = 1
 STORAGE_KEY = "jarvis_updater_data"
+LOVELACE_RESOURCES_STORAGE_KEY = "lovelace_resources"
 
 # Home Assistant exposes /config/www as /www in the File Editor/Samba UI and
 # as /local in Lovelace. Internally integrations must write relative to
@@ -19,9 +20,16 @@ STORAGE_KEY = "jarvis_updater_data"
 TARGET_DIR = "www/jarvis"
 TARGET_FILE = "jarvis-cards.js"
 BACKUP_DIR = "www/jarvis/backups"
+LOVELACE_RESOURCE_BASE_URL = "/local/jarvis/jarvis-cards.js"
+LOVELACE_RESOURCE_TYPE = "module"
+LOVELACE_RESOURCE_ID = "jarvis_cards_updater"
 
 ATTR_INSTALLED_SHA256 = "installed_sha256"
 ATTR_AVAILABLE_SHA256 = "available_sha256"
 ATTR_DOWNLOAD_URL = "download_url"
 ATTR_LICENSE_CUSTOMER = "license_customer"
+ATTR_LICENSE_STATUS = "license_status"
+ATTR_LICENSE_EXPIRES_AT = "license_expires_at"
 ATTR_RELEASED_AT = "released_at"
+ATTR_RESOURCE_URL = "lovelace_resource_url"
+ATTR_CACHE_HINT = "browser_cache_hint"

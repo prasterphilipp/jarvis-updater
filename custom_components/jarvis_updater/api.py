@@ -21,6 +21,27 @@ class JarvisConnectionError(JarvisUpdaterError):
 
 
 @dataclass(slots=True)
+class JarvisLicenseInfo:
+    """License metadata returned by the update server."""
+
+    customer: str | None
+    status: str | None
+    expires_at: str | None
+    product: str | None
+    raw: dict[str, Any]
+
+    @classmethod
+    def from_json(cls, data: dict[str, Any]) -> "JarvisLicenseInfo":
+        return cls(
+            customer=_optional_str(data.get("customer") or data.get("customer_name")),
+            status=_optional_str(data.get("status") or data.get("state")),
+            expires_at=_optional_str(data.get("expires_at") or data.get("valid_until")),
+            product=_optional_str(data.get("product")),
+            raw=data,
+        )
+
+
+@dataclass(slots=True)
 class JarvisManifest:
     product: str
     channel: str
@@ -32,8 +53,13 @@ class JarvisManifest:
     released_at: str | None
     min_ha_version: str | None
     changelog: list[str]
-    license_customer: str | None
+    license: JarvisLicenseInfo
     raw: dict[str, Any]
+
+    @property
+    def license_customer(self) -> str | None:
+        """Backward-compatible shortcut for existing entity attributes."""
+        return self.license.customer
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> "JarvisManifest":
@@ -49,10 +75,10 @@ class JarvisManifest:
             download_url=str(data["download_url"]),
             sha256=str(data["sha256"]),
             size=int(data["size"]) if data.get("size") is not None else None,
-            released_at=data.get("released_at"),
-            min_ha_version=data.get("min_ha_version"),
+            released_at=_optional_str(data.get("released_at")),
+            min_ha_version=_optional_str(data.get("min_ha_version")),
             changelog=[str(item) for item in changelog],
-            license_customer=license_data.get("customer"),
+            license=JarvisLicenseInfo.from_json(license_data),
             raw=data,
         )
 
@@ -111,3 +137,10 @@ async def _response_detail(response) -> str:
         return str(data.get("detail") or data)
     except Exception:
         return await response.text()
+
+
+def _optional_str(value: Any) -> str | None:
+    if value is None:
+        return None
+    value = str(value)
+    return value or None

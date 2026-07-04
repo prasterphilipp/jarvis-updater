@@ -16,11 +16,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         [
             JarvisInstalledVersionSensor(coordinator, entry),
             JarvisAvailableVersionSensor(coordinator, entry),
+            JarvisCustomerSensor(coordinator, entry),
+            JarvisLicenseStatusSensor(coordinator, entry),
+            JarvisChangelogSensor(coordinator, entry),
+            JarvisCacheHintSensor(coordinator, entry),
         ]
     )
 
 
-class _JarvisVersionSensor(CoordinatorEntity[JarvisUpdaterCoordinator], SensorEntity):
+class _JarvisSensor(CoordinatorEntity[JarvisUpdaterCoordinator], SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry, suffix: str) -> None:
@@ -36,7 +40,7 @@ class _JarvisVersionSensor(CoordinatorEntity[JarvisUpdaterCoordinator], SensorEn
         await self.coordinator.async_request_refresh()
 
 
-class JarvisInstalledVersionSensor(_JarvisVersionSensor):
+class JarvisInstalledVersionSensor(_JarvisSensor):
     _attr_name = "Installierte Version"
     _attr_icon = "mdi:package-check"
 
@@ -47,8 +51,15 @@ class JarvisInstalledVersionSensor(_JarvisVersionSensor):
     def native_value(self) -> str:
         return self.coordinator.installed_version or "nicht installiert"
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        return {
+            "sha256": self.coordinator.installed_sha256,
+            "resource_url": self.coordinator.resource_url,
+        }
 
-class JarvisAvailableVersionSensor(_JarvisVersionSensor):
+
+class JarvisAvailableVersionSensor(_JarvisSensor):
     _attr_name = "Verfügbare Version"
     _attr_icon = "mdi:package-up"
 
@@ -69,6 +80,91 @@ class JarvisAvailableVersionSensor(_JarvisVersionSensor):
             "sha256": manifest.sha256,
             "size": manifest.size,
             "released_at": manifest.released_at,
-            "license_customer": manifest.license_customer,
+            "license_customer": manifest.license.customer,
+            "license_status": manifest.license.status,
+            "license_expires_at": manifest.license.expires_at,
             "changelog": "\n".join(manifest.changelog),
+        }
+
+
+class JarvisCustomerSensor(_JarvisSensor):
+    _attr_name = "Kunde"
+    _attr_icon = "mdi:account-badge"
+
+    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "customer")
+
+    @property
+    def native_value(self) -> str:
+        if self.coordinator.data and self.coordinator.data.license.customer:
+            return self.coordinator.data.license.customer
+        return "unbekannt"
+
+
+class JarvisLicenseStatusSensor(_JarvisSensor):
+    _attr_name = "Lizenzstatus"
+    _attr_icon = "mdi:license"
+
+    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "license_status")
+
+    @property
+    def native_value(self) -> str:
+        if self.coordinator.data and self.coordinator.data.license.status:
+            return self.coordinator.data.license.status
+        if self.coordinator.last_update_success and self.coordinator.data:
+            return "aktiv"
+        return "unbekannt"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        license_info = self.coordinator.data.license if self.coordinator.data else None
+        return {
+            "customer": license_info.customer if license_info else None,
+            "expires_at": license_info.expires_at if license_info else None,
+            "product": license_info.product if license_info else None,
+        }
+
+
+class JarvisChangelogSensor(_JarvisSensor):
+    _attr_name = "Changelog"
+    _attr_icon = "mdi:text-box-outline"
+
+    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "changelog")
+
+    @property
+    def native_value(self) -> str:
+        if not self.coordinator.data:
+            return "nicht verfügbar"
+        return self.coordinator.data.latest_version
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str | list[str] | None]:
+        manifest = self.coordinator.data
+        if not manifest:
+            return {}
+        return {
+            "released_at": manifest.released_at,
+            "items": manifest.changelog,
+            "text": "\n".join(f"- {item}" for item in manifest.changelog),
+        }
+
+
+class JarvisCacheHintSensor(_JarvisSensor):
+    _attr_name = "Browser-Cache-Hinweis"
+    _attr_icon = "mdi:cached"
+
+    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "cache_hint")
+
+    @property
+    def native_value(self) -> str:
+        return "Resource gesetzt" if self.coordinator.resource_url else "nicht gesetzt"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        return {
+            "resource_url": self.coordinator.resource_url,
+            "hint": self.coordinator.cache_hint,
         }

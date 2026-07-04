@@ -16,6 +16,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         [
             JarvisInstallButton(coordinator, entry),
             JarvisCheckButton(coordinator, entry),
+            JarvisRollbackButton(coordinator, entry),
         ]
     )
 
@@ -35,6 +36,7 @@ class _JarvisButton(CoordinatorEntity[JarvisUpdaterCoordinator], ButtonEntity):
 
 class JarvisInstallButton(_JarvisButton):
     _attr_name = "Update installieren"
+    _attr_icon = "mdi:download-circle"
 
     def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "install_update_button")
@@ -45,9 +47,25 @@ class JarvisInstallButton(_JarvisButton):
 
 class JarvisCheckButton(_JarvisButton):
     _attr_name = "Update prüfen"
+    _attr_icon = "mdi:cloud-search"
 
     def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "check_update_button")
 
     async def async_press(self) -> None:
         await self.coordinator.async_request_refresh()
+
+
+class JarvisRollbackButton(_JarvisButton):
+    _attr_name = "Rollback ausführen"
+    _attr_icon = "mdi:backup-restore"
+
+    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, entry, "rollback_button")
+
+    @property
+    def available(self) -> bool:
+        return bool(self.coordinator.rollback_options)
+
+    async def async_press(self) -> None:
+        await self.coordinator.async_rollback_selected()

@@ -19,5 +19,48 @@
     "abort": {
       "already_configured": "Jarvis Cards Updater is already configured."
     }
+  },
+  "entity": {
+    "update": {
+      "cards": {
+        "name": "Cards"
+      }
+    },
+    "button": {
+      "update_installieren": {
+        "name": "Install update"
+      },
+      "update_prufen": {
+        "name": "Check for update"
+      },
+      "rollback_ausfuhren": {
+        "name": "Run rollback"
+      }
+    },
+    "select": {
+      "rollback_version": {
+        "name": "Rollback version"
+      }
+    },
+    "sensor": {
+      "installierte_version": {
+        "name": "Installed version"
+      },
+      "verfugbare_version": {
+        "name": "Available version"
+      },
+      "kunde": {
+        "name": "Customer"
+      },
+      "lizenzstatus": {
+        "name": "License status"
+      },
+      "changelog": {
+        "name": "Changelog"
+      },
+      "browser_cache_hinweis": {
+        "name": "Browser cache hint"
+      }
+    }
   }
 }

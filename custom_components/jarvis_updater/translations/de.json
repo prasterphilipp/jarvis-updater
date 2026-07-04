@@ -32,6 +32,14 @@
       },
       "update_prufen": {
         "name": "Update prüfen"
+      },
+      "rollback_ausfuhren": {
+        "name": "Rollback ausführen"
+      }
+    },
+    "select": {
+      "rollback_version": {
+        "name": "Rollback-Version"
       }
     },
     "sensor": {
@@ -40,6 +48,18 @@
       },
       "verfugbare_version": {
         "name": "Verfügbare Version"
+      },
+      "kunde": {
+        "name": "Kunde"
+      },
+      "lizenzstatus": {
+        "name": "Lizenzstatus"
+      },
+      "changelog": {
+        "name": "Changelog"
+      },
+      "browser_cache_hinweis": {
+        "name": "Browser-Cache-Hinweis"
       }
     }
   }

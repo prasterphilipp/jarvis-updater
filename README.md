@@ -34,11 +34,13 @@ Home Assistant serves that file as:
 /local/jarvis/jarvis-cards.js
 ```
 
-Use this Lovelace resource URL, updating the cache-busting version after card updates if needed:
+The integration now creates/updates the Lovelace module resource automatically with a cache-busting version, for example:
 
 ```text
 /local/jarvis/jarvis-cards.js?v=1.0.1
 ```
+
+If a browser still shows an older card after update or rollback, reopen the dashboard, hard-reload the browser/app, or clear the browser cache. Home Assistant also gets a persistent notification with the current resource URL after each install/rollback.
 
 ## Entities
 
@@ -48,11 +50,39 @@ After setup Home Assistant creates entities similar to:
 update.jarvis_cards_cards
 button.jarvis_cards_update_installieren
 button.jarvis_cards_update_prufen
+button.jarvis_cards_rollback_ausfuhren
+select.jarvis_cards_rollback_version
 sensor.jarvis_cards_installierte_version
 sensor.jarvis_cards_verfugbare_version
+sensor.jarvis_cards_kunde
+sensor.jarvis_cards_lizenzstatus
+sensor.jarvis_cards_changelog
+sensor.jarvis_cards_browser_cache_hinweis
 ```
 
 Exact entity IDs can vary depending on your Home Assistant naming scheme.
+
+## Rollback
+
+Every update backs up the previously installed `/www/jarvis/jarvis-cards.js` into `/www/jarvis/backups`.
+
+To roll back:
+
+1. Select the desired backup in `select.jarvis_cards_rollback_version`.
+2. Press `button.jarvis_cards_rollback_ausfuhren`.
+3. Reload the dashboard/browser if Home Assistant still shows the old cached JavaScript.
+
+Before rollback, the currently installed file is copied to `/www/jarvis/backups/pre-rollback` so it can still be recovered.
+
+## License and changelog display
+
+The update entity and sensors expose metadata returned by the update server:
+
+- Customer name
+- License status and expiry date if supplied by the server
+- Available version, release date, checksum and file size
+- Changelog entries
+- Current Lovelace resource URL and browser-cache hint
 
 ## Security
 
