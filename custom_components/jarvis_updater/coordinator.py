@@ -8,7 +8,7 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from homeassistant.components import persistent_notification
 from homeassistant.config_entries import ConfigEntry
@@ -208,28 +208,150 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
     async def async_ensure_lovelace_resource(self, version: str | None = None) -> str:
         """Create or update the Lovelace module resource with cache busting."""
         url = self._resource_url(version)
+        updated_live_collection = await self._async_update_lovelace_resource_collection(url)
+        if not updated_live_collection:
+            await self._async_update_lovelace_resource_storage(url)
+        await self._async_reload_lovelace_resources()
+        return url
+
+    async def _async_update_lovelace_resource_storage(self, url: str) -> None:
+        """Update the Lovelace resource storage as a fallback for HA versions without a live collection."""
         resources = await self.resource_store.async_load() or {}
         items = resources.get("items")
         if not isinstance(items, list):
             items = []
 
+        new_item = {"id": LOVELACE_RESOURCE_ID, "type": LOVELACE_RESOURCE_TYPE, "url": url}
+        updated_items: list[dict[str, Any]] = []
         matched = False
         for item in items:
             if not isinstance(item, dict):
+                updated_items.append(item)
                 continue
-            item_url = str(item.get("url") or "")
-            if item.get("id") == LOVELACE_RESOURCE_ID or item_url.startswith(LOVELACE_RESOURCE_BASE_URL):
-                item["id"] = item.get("id") or LOVELACE_RESOURCE_ID
-                item["type"] = LOVELACE_RESOURCE_TYPE
-                item["url"] = url
-                matched = True
+            if self._is_jarvis_lovelace_resource(item):
+                if not matched:
+                    updated = dict(item)
+                    updated["id"] = item.get("id") or LOVELACE_RESOURCE_ID
+                    updated["type"] = LOVELACE_RESOURCE_TYPE
+                    updated["url"] = url
+                    updated_items.append(updated)
+                    matched = True
+                continue
+            updated_items.append(item)
 
         if not matched:
-            items.append({"id": LOVELACE_RESOURCE_ID, "type": LOVELACE_RESOURCE_TYPE, "url": url})
+            updated_items.append(new_item)
 
-        resources["items"] = items
+        resources["items"] = updated_items
         await self.resource_store.async_save(resources)
-        return url
+
+    async def _async_update_lovelace_resource_collection(self, url: str) -> bool:
+        """Update HA's in-memory Lovelace resource collection when available."""
+        collection = self._find_lovelace_resource_collection()
+        if collection is None:
+            return False
+
+        try:
+            info = await collection.async_get_info()
+        except Exception as err:  # noqa: BLE001 - HA internals vary between versions
+            _LOGGER.debug("Could not read Lovelace resource collection: %s", err)
+            return False
+
+        items = self._extract_resource_items(info)
+        matched_items = [item for item in items if self._is_jarvis_lovelace_resource(item)]
+
+        if matched_items:
+            primary = matched_items[0]
+            primary_id = primary.get("id")
+            if primary_id is None:
+                return False
+            if not await self._async_update_collection_item(collection, str(primary_id), url):
+                return False
+            for duplicate in matched_items[1:]:
+                duplicate_id = duplicate.get("id")
+                if duplicate_id is None:
+                    continue
+                await self._async_delete_collection_item(collection, str(duplicate_id))
+            return True
+
+        return await self._async_create_collection_item(collection, url)
+
+    def _find_lovelace_resource_collection(self) -> Any | None:
+        lovelace_data = self.hass.data.get("lovelace") if hasattr(self.hass, "data") else None
+        if not isinstance(lovelace_data, dict):
+            return None
+        for key, value in lovelace_data.items():
+            if "resource" not in str(key).lower():
+                continue
+            if all(hasattr(value, attr) for attr in ("async_get_info", "async_create_item", "async_update_item")):
+                return value
+        return None
+
+    def _extract_resource_items(self, info: Any) -> list[dict[str, Any]]:
+        if isinstance(info, list):
+            return [item for item in info if isinstance(item, dict)]
+        if not isinstance(info, dict):
+            return []
+        for key in ("resources", "items"):
+            value = info.get(key)
+            if isinstance(value, list):
+                return [item for item in value if isinstance(item, dict)]
+        return []
+
+    async def _async_update_collection_item(self, collection: Any, item_id: str, url: str) -> bool:
+        for payload in self._resource_payloads(url):
+            try:
+                await collection.async_update_item(item_id, payload)
+                return True
+            except Exception as err:  # noqa: BLE001 - HA versions accept different payload names
+                _LOGGER.debug("Could not update Lovelace resource with payload %s: %s", payload, err)
+        return False
+
+    async def _async_create_collection_item(self, collection: Any, url: str) -> bool:
+        for payload in self._resource_payloads(url):
+            try:
+                await collection.async_create_item(payload)
+                return True
+            except Exception as err:  # noqa: BLE001 - HA versions accept different payload names
+                _LOGGER.debug("Could not create Lovelace resource with payload %s: %s", payload, err)
+        return False
+
+    async def _async_delete_collection_item(self, collection: Any, item_id: str) -> None:
+        delete = getattr(collection, "async_delete_item", None)
+        if delete is None:
+            return
+        try:
+            await delete(item_id)
+        except Exception as err:  # noqa: BLE001 - duplicate cleanup is best effort
+            _LOGGER.debug("Could not remove duplicate Lovelace resource %s: %s", item_id, err)
+
+    async def _async_reload_lovelace_resources(self) -> None:
+        services = getattr(self.hass, "services", None)
+        if services is None or not hasattr(services, "async_call"):
+            return
+        try:
+            await services.async_call("lovelace", "reload_resources", blocking=False)
+        except Exception as err:  # noqa: BLE001 - service is not present in all HA versions
+            _LOGGER.debug("Could not reload Lovelace resources after Jarvis update: %s", err)
+
+    def _resource_payloads(self, url: str) -> tuple[dict[str, str], ...]:
+        return (
+            {"url": url, "type": LOVELACE_RESOURCE_TYPE},
+            {"url": url, "res_type": LOVELACE_RESOURCE_TYPE},
+        )
+
+    def _is_jarvis_lovelace_resource(self, item: dict[str, Any]) -> bool:
+        if item.get("id") == LOVELACE_RESOURCE_ID:
+            return True
+        item_url = str(item.get("url") or "")
+        if not item_url:
+            return False
+        path = urlsplit(item_url).path
+        return (
+            path.startswith(LOVELACE_RESOURCE_BASE_URL)
+            or path.startswith("/local/jarvis/jarvis-cards")
+            or ("/jarvis/" in path and "jarvis-cards" in path)
+        )
 
     async def async_current_file_sha256(self) -> str | None:
         return await self.hass.async_add_executor_job(self._current_file_sha256)

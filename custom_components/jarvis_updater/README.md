@@ -54,7 +54,7 @@ Die Cards werden lokal installiert nach:
 /www/jarvis/jarvis-cards.js
 ```
 
-Die Integration erstellt/aktualisiert die Lovelace Resource automatisch als JavaScript-Modul, inklusive Cache-Buster:
+Die Integration erstellt/aktualisiert die Lovelace Resource automatisch als JavaScript-Modul, inklusive Cache-Buster. Bestehende Jarvis Resource-Einträge werden dabei auch erkannt, wenn sie noch auf ältere versionierte `jarvis-cards...js` URLs zeigen:
 
 ```text
 /local/jarvis/jarvis-cards.js?v=1.0.1
