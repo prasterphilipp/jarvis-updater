@@ -208,9 +208,13 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
     async def async_ensure_lovelace_resource(self, version: str | None = None) -> str:
         """Create or update the Lovelace module resource with cache busting."""
         url = self._resource_url(version)
-        updated_live_collection = await self._async_update_lovelace_resource_collection(url)
-        if not updated_live_collection:
-            await self._async_update_lovelace_resource_storage(url)
+        # Update both paths deliberately:
+        # - the live collection updates HA immediately when available
+        # - the storage file keeps the change persistent across reload/restart
+        # Some HA versions report a live collection update as successful while the
+        # visible dashboard resource list is still backed by .storage/lovelace_resources.
+        await self._async_update_lovelace_resource_collection(url)
+        await self._async_update_lovelace_resource_storage(url)
         await self._async_reload_lovelace_resources()
         return url
 
@@ -350,7 +354,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         return (
             path.startswith(LOVELACE_RESOURCE_BASE_URL)
             or path.startswith("/local/jarvis/jarvis-cards")
-            or ("/jarvis/" in path and "jarvis-cards" in path)
+            or "jarvis-cards" in path
         )
 
     async def async_current_file_sha256(self) -> str | None:

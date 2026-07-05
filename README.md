@@ -34,7 +34,7 @@ Home Assistant serves that file as:
 /local/jarvis/jarvis-cards.js
 ```
 
-The integration now creates/updates the Lovelace module resource automatically with a cache-busting version. Existing Jarvis resource entries are also recognized when they still point to older versioned `jarvis-cards...js` URLs, for example:
+The integration creates/updates the Lovelace module resource automatically with a cache-busting version. It updates both Home Assistant's live Lovelace resource collection and the persistent `.storage/lovelace_resources` data so the entry survives reloads/restarts. Existing Jarvis resource entries are recognized when they point to old local, GitHub/jsDelivr, or other `jarvis-cards...js` URLs, for example:
 
 ```text
 /local/jarvis/jarvis-cards.js?v=1.0.1
