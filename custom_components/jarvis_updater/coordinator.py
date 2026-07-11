@@ -256,12 +256,11 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             return False
 
         try:
-            info = await collection.async_get_info()
+            items = await self._async_collection_items(collection)
         except Exception as err:  # noqa: BLE001 - HA internals vary between versions
             _LOGGER.debug("Could not read Lovelace resource collection: %s", err)
             return False
 
-        items = self._extract_resource_items(info)
         matched_items = [item for item in items if self._is_jarvis_lovelace_resource(item)]
 
         if matched_items:
@@ -282,14 +281,41 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
 
     def _find_lovelace_resource_collection(self) -> Any | None:
         lovelace_data = self.hass.data.get("lovelace") if hasattr(self.hass, "data") else None
-        if not isinstance(lovelace_data, dict):
+        if lovelace_data is None:
             return None
-        for key, value in lovelace_data.items():
-            if "resource" not in str(key).lower():
-                continue
+
+        # Current Home Assistant stores a LovelaceData dataclass at
+        # hass.data["lovelace"] and exposes the live resources as its
+        # .resources attribute. Older/custom builds may still use a dict-like
+        # shape, so support both. The previous dict-only lookup never found the
+        # live collection on modern HA, which left only the .storage fallback and
+        # made the resource/cache-buster appear unchanged until restart.
+        candidates: list[Any] = []
+        direct_resources = getattr(lovelace_data, "resources", None)
+        if direct_resources is not None:
+            candidates.append(direct_resources)
+        if isinstance(lovelace_data, dict):
+            candidates.extend(
+                value for key, value in lovelace_data.items() if "resource" in str(key).lower()
+            )
+
+        for value in candidates:
             if all(hasattr(value, attr) for attr in ("async_get_info", "async_create_item", "async_update_item")):
                 return value
         return None
+
+    async def _async_collection_items(self, collection: Any) -> list[dict[str, Any]]:
+        """Return live Lovelace resource items from a HA collection."""
+        # ResourceStorageCollection.async_get_info() ensures the collection is loaded,
+        # but it only returns a count (e.g. {"resources": 2}), not the item list.
+        info = await collection.async_get_info()
+        async_items = getattr(collection, "async_items", None)
+        if async_items is not None:
+            items = async_items()
+            if isinstance(items, list):
+                return [item for item in items if isinstance(item, dict)]
+
+        return self._extract_resource_items(info)
 
     def _extract_resource_items(self, info: Any) -> list[dict[str, Any]]:
         if isinstance(info, list):
