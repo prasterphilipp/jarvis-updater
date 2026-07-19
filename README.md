@@ -20,6 +20,10 @@ This repository contains only the updater integration. The premium JustSmart Car
 7. Go to Settings -> Devices and services -> Add integration -> JustSmart Cards Updater.
 8. Enter your license key.
 
+## Versionierung
+
+Der Updater und das Kartenpaket haben getrennte Versionsnummern. Die Updater-Version beschreibt die Home-Assistant-Integration; die in Home Assistant angezeigte verfügbare Version stammt aus dem Karten-Manifest des Update-Servers.
+
 ## What it installs
 
 The updater writes the licensed card bundle to the Home Assistant `www` folder:
