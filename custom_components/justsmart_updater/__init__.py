@@ -6,14 +6,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, PLATFORMS
-from .coordinator import JarvisUpdaterCoordinator
+from .coordinator import JustSmartUpdaterCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Jarvis Updater from a config entry."""
-    coordinator = JarvisUpdaterCoordinator(hass, entry)
+    """Set up JustSmart Updater from a config entry."""
+    coordinator = JustSmartUpdaterCoordinator(hass, entry)
     await coordinator.async_load_storage()
     await coordinator.async_config_entry_first_refresh()
 
@@ -23,7 +23,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload Jarvis Updater."""
+    """Unload JustSmart Updater."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)

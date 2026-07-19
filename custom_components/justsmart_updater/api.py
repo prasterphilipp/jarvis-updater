@@ -8,20 +8,20 @@ from aiohttp import ClientError, ClientResponseError, ClientSession
 from .const import CONF_LICENSE_KEY, CONF_UPDATE_URL
 
 
-class JarvisUpdaterError(Exception):
-    """Base error for Jarvis updater."""
+class JustSmartUpdaterError(Exception):
+    """Base error for JustSmart updater."""
 
 
-class JarvisAuthError(JarvisUpdaterError):
+class JustSmartAuthError(JustSmartUpdaterError):
     """License/authentication failed."""
 
 
-class JarvisConnectionError(JarvisUpdaterError):
+class JustSmartConnectionError(JustSmartUpdaterError):
     """Update server could not be reached."""
 
 
 @dataclass(slots=True)
-class JarvisLicenseInfo:
+class JustSmartLicenseInfo:
     """License metadata returned by the update server."""
 
     customer: str | None
@@ -31,7 +31,7 @@ class JarvisLicenseInfo:
     raw: dict[str, Any]
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "JarvisLicenseInfo":
+    def from_json(cls, data: dict[str, Any]) -> "JustSmartLicenseInfo":
         return cls(
             customer=_optional_str(data.get("customer") or data.get("customer_name")),
             status=_optional_str(data.get("status") or data.get("state")),
@@ -42,7 +42,7 @@ class JarvisLicenseInfo:
 
 
 @dataclass(slots=True)
-class JarvisManifest:
+class JustSmartManifest:
     product: str
     channel: str
     latest_version: str
@@ -53,7 +53,7 @@ class JarvisManifest:
     released_at: str | None
     min_ha_version: str | None
     changelog: list[str]
-    license: JarvisLicenseInfo
+    license: JustSmartLicenseInfo
     raw: dict[str, Any]
 
     @property
@@ -62,13 +62,13 @@ class JarvisManifest:
         return self.license.customer
 
     @classmethod
-    def from_json(cls, data: dict[str, Any]) -> "JarvisManifest":
+    def from_json(cls, data: dict[str, Any]) -> "JustSmartManifest":
         license_data = data.get("license") or {}
         changelog = data.get("changelog") or []
         if not isinstance(changelog, list):
             changelog = [str(changelog)]
         return cls(
-            product=str(data.get("product") or "jarvis-cards"),
+            product=str(data.get("product") or "justsmart-cards"),
             channel=str(data.get("channel") or "stable"),
             latest_version=str(data["latest_version"]),
             file_name=str(data["file_name"]),
@@ -78,13 +78,13 @@ class JarvisManifest:
             released_at=_optional_str(data.get("released_at")),
             min_ha_version=_optional_str(data.get("min_ha_version")),
             changelog=[str(item) for item in changelog],
-            license=JarvisLicenseInfo.from_json(license_data),
+            license=JustSmartLicenseInfo.from_json(license_data),
             raw=data,
         )
 
 
-class JarvisUpdateClient:
-    """Small async client for the Jarvis Updates API."""
+class JustSmartUpdateClient:
+    """Small async client for the JustSmart Updates API."""
 
     def __init__(self, session: ClientSession, config: dict[str, Any]) -> None:
         self._session = session
@@ -93,42 +93,42 @@ class JarvisUpdateClient:
 
     @property
     def headers(self) -> dict[str, str]:
-        return {"X-Jarvis-License": self._license_key}
+        return {"X-JustSmart-License": self._license_key}
 
-    async def async_get_manifest(self) -> JarvisManifest:
+    async def async_get_manifest(self) -> JustSmartManifest:
         url = f"{self._base_url}/api/manifest"
         try:
             async with self._session.get(url, headers=self.headers, timeout=30) as response:
                 if response.status in (401, 403):
                     detail = await _response_detail(response)
-                    raise JarvisAuthError(detail)
+                    raise JustSmartAuthError(detail)
                 response.raise_for_status()
                 data = await response.json()
-        except JarvisAuthError:
+        except JustSmartAuthError:
             raise
         except (ClientResponseError, ClientError, TimeoutError) as err:
-            raise JarvisConnectionError(str(err)) from err
+            raise JustSmartConnectionError(str(err)) from err
         except Exception as err:
-            raise JarvisUpdaterError(str(err)) from err
+            raise JustSmartUpdaterError(str(err)) from err
         try:
-            return JarvisManifest.from_json(data)
+            return JustSmartManifest.from_json(data)
         except Exception as err:
-            raise JarvisUpdaterError(f"Ungültiges Manifest: {err}") from err
+            raise JustSmartUpdaterError(f"Ungültiges Manifest: {err}") from err
 
-    async def async_download(self, manifest: JarvisManifest) -> bytes:
+    async def async_download(self, manifest: JustSmartManifest) -> bytes:
         try:
             async with self._session.get(manifest.download_url, headers=self.headers, timeout=120) as response:
                 if response.status in (401, 403):
                     detail = await _response_detail(response)
-                    raise JarvisAuthError(detail)
+                    raise JustSmartAuthError(detail)
                 response.raise_for_status()
                 return await response.read()
-        except JarvisAuthError:
+        except JustSmartAuthError:
             raise
         except (ClientResponseError, ClientError, TimeoutError) as err:
-            raise JarvisConnectionError(str(err)) from err
+            raise JustSmartConnectionError(str(err)) from err
         except Exception as err:
-            raise JarvisUpdaterError(str(err)) from err
+            raise JustSmartUpdaterError(str(err)) from err
 
 
 async def _response_detail(response) -> str:

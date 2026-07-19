@@ -17,7 +17,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import JarvisAuthError, JarvisManifest, JarvisUpdateClient, JarvisUpdaterError
+from .api import JustSmartAuthError, JustSmartManifest, JustSmartUpdateClient, JustSmartUpdaterError
 from .const import (
     ATTR_CACHE_HINT,
     ATTR_INSTALLED_SHA256,
@@ -35,16 +35,16 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-_BACKUP_RE = re.compile(r"^jarvis-cards-(?P<version>.+)-(?P<stamp>\d{8}-\d{6})\.js$")
+_BACKUP_RE = re.compile(r"^justsmart-cards-(?P<version>.+)-(?P<stamp>\d{8}-\d{6})\.js$")
 
 
-class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
-    """Fetch manifest, install releases and manage local Jarvis card resources."""
+class JustSmartUpdaterCoordinator(DataUpdateCoordinator[JustSmartManifest]):
+    """Fetch manifest, install releases and manage local JustSmart card resources."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         super().__init__(hass, _LOGGER, name=DOMAIN)
         self.entry = entry
-        self.client = JarvisUpdateClient(async_get_clientsession(hass), entry.data)
+        self.client = JustSmartUpdateClient(async_get_clientsession(hass), entry.data)
         self.store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry.entry_id}")
         self.resource_store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, LOVELACE_RESOURCES_STORAGE_KEY)
         self.storage: dict[str, Any] = {}
@@ -96,12 +96,12 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
     def backups(self) -> list[dict[str, str | int | None]]:
         return self._list_backups()
 
-    async def _async_update_data(self) -> JarvisManifest:
+    async def _async_update_data(self) -> JustSmartManifest:
         try:
             return await self.client.async_get_manifest()
-        except JarvisAuthError as err:
+        except JustSmartAuthError as err:
             raise UpdateFailed(f"Lizenz ungültig: {err}") from err
-        except JarvisUpdaterError as err:
+        except JustSmartUpdaterError as err:
             raise UpdateFailed(f"Manifest konnte nicht geladen werden: {err}") from err
 
     async def async_install_update(self) -> None:
@@ -110,7 +110,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         content = await self.client.async_download(manifest)
         digest = hashlib.sha256(content).hexdigest()
         if digest != manifest.sha256:
-            raise JarvisUpdaterError(
+            raise JustSmartUpdaterError(
                 f"SHA256 stimmt nicht: Download {digest}, Manifest {manifest.sha256}"
             )
 
@@ -130,11 +130,11 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             }
         )
         await self.store.async_save(self.storage)
-        self.last_install_result = f"Jarvis Cards {manifest.latest_version} installiert"
-        self._create_cache_notification("Jarvis Cards aktualisiert", self.last_install_result, resource_url)
+        self.last_install_result = f"JustSmart Cards {manifest.latest_version} installiert"
+        self._create_cache_notification("JustSmart Cards aktualisiert", self.last_install_result, resource_url)
         await self.async_request_refresh()
 
-    def _write_release(self, content: bytes, manifest: JarvisManifest, digest: str) -> Path | None:
+    def _write_release(self, content: bytes, manifest: JustSmartManifest, digest: str) -> Path | None:
         target = Path(self.target_path)
         backup_dir = Path(self.backup_dir)
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -144,20 +144,20 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         if target.exists():
             stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
             previous = self.installed_version or "unknown"
-            backup_path = backup_dir / f"jarvis-cards-{previous}-{stamp}.js"
+            backup_path = backup_dir / f"justsmart-cards-{previous}-{stamp}.js"
             shutil.copy2(target, backup_path)
 
         tmp_path = target.with_suffix(".js.tmp")
         tmp_path.write_bytes(content)
         if hashlib.sha256(tmp_path.read_bytes()).hexdigest() != digest:
             tmp_path.unlink(missing_ok=True)
-            raise JarvisUpdaterError("SHA256 stimmt nach dem Schreiben nicht")
+            raise JustSmartUpdaterError("SHA256 stimmt nach dem Schreiben nicht")
         tmp_path.replace(target)
         return backup_path
 
     async def async_select_backup(self, file_name: str) -> None:
         if file_name not in self.rollback_options:
-            raise JarvisUpdaterError(f"Rollback-Datei nicht gefunden: {file_name}")
+            raise JustSmartUpdaterError(f"Rollback-Datei nicht gefunden: {file_name}")
         self.storage["selected_rollback_backup"] = file_name
         await self.store.async_save(self.storage)
         self.async_update_listeners()
@@ -165,7 +165,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
     async def async_rollback_selected(self) -> None:
         selected = self.selected_backup
         if not selected:
-            raise JarvisUpdaterError("Kein Rollback-Backup verfügbar")
+            raise JustSmartUpdaterError("Kein Rollback-Backup verfügbar")
         backup_path = Path(self.backup_dir) / selected
         version = self._backup_version(backup_path) or "rollback"
         digest = await self.hass.async_add_executor_job(self._restore_backup, backup_path)
@@ -183,13 +183,13 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             }
         )
         await self.store.async_save(self.storage)
-        self.last_install_result = f"Rollback auf Jarvis Cards {version} ausgeführt"
-        self._create_cache_notification("Jarvis Cards Rollback", self.last_install_result, resource_url)
+        self.last_install_result = f"Rollback auf JustSmart Cards {version} ausgeführt"
+        self._create_cache_notification("JustSmart Cards Rollback", self.last_install_result, resource_url)
         await self.async_request_refresh()
 
     def _restore_backup(self, backup_path: Path) -> str:
         if not backup_path.exists() or not backup_path.is_file():
-            raise JarvisUpdaterError(f"Rollback-Datei nicht gefunden: {backup_path.name}")
+            raise JustSmartUpdaterError(f"Rollback-Datei nicht gefunden: {backup_path.name}")
         target = Path(self.target_path)
         target.parent.mkdir(parents=True, exist_ok=True)
         content = backup_path.read_bytes()
@@ -199,7 +199,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         if target.exists():
             stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
             current = self.installed_version or "unknown"
-            shutil.copy2(target, pre_rollback_dir / f"jarvis-cards-{current}-{stamp}.js")
+            shutil.copy2(target, pre_rollback_dir / f"justsmart-cards-{current}-{stamp}.js")
         tmp_path = target.with_suffix(".js.tmp")
         tmp_path.write_bytes(content)
         tmp_path.replace(target)
@@ -232,7 +232,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             if not isinstance(item, dict):
                 updated_items.append(item)
                 continue
-            if self._is_jarvis_lovelace_resource(item):
+            if self._is_justsmart_lovelace_resource(item):
                 if not matched:
                     updated = dict(item)
                     updated["id"] = item.get("id") or LOVELACE_RESOURCE_ID
@@ -261,7 +261,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             _LOGGER.debug("Could not read Lovelace resource collection: %s", err)
             return False
 
-        matched_items = [item for item in items if self._is_jarvis_lovelace_resource(item)]
+        matched_items = [item for item in items if self._is_justsmart_lovelace_resource(item)]
 
         if matched_items:
             primary = matched_items[0]
@@ -362,7 +362,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         try:
             await services.async_call("lovelace", "reload_resources", blocking=False)
         except Exception as err:  # noqa: BLE001 - service is not present in all HA versions
-            _LOGGER.debug("Could not reload Lovelace resources after Jarvis update: %s", err)
+            _LOGGER.debug("Could not reload Lovelace resources after JustSmart update: %s", err)
 
     def _resource_payloads(self, url: str) -> tuple[dict[str, str], ...]:
         return (
@@ -370,7 +370,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
             {"url": url, "res_type": LOVELACE_RESOURCE_TYPE},
         )
 
-    def _is_jarvis_lovelace_resource(self, item: dict[str, Any]) -> bool:
+    def _is_justsmart_lovelace_resource(self, item: dict[str, Any]) -> bool:
         if item.get("id") == LOVELACE_RESOURCE_ID:
             return True
         item_url = str(item.get("url") or "")
@@ -379,8 +379,8 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         path = urlsplit(item_url).path
         return (
             path.startswith(LOVELACE_RESOURCE_BASE_URL)
-            or path.startswith("/local/jarvis/jarvis-cards")
-            or "jarvis-cards" in path
+            or path.startswith("/local/justsmart/justsmart-cards")
+            or "justsmart-cards" in path
         )
 
     async def async_current_file_sha256(self) -> str | None:
@@ -397,7 +397,7 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         if not backup_dir.exists():
             return []
         backups: list[dict[str, str | int | None]] = []
-        for path in backup_dir.glob("jarvis-cards-*.js"):
+        for path in backup_dir.glob("justsmart-cards-*.js"):
             if not path.is_file():
                 continue
             stat = path.stat()
@@ -425,8 +425,8 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
 
     def _cache_hint(self, resource_url: str) -> str:
         return (
-            f"Lovelace Resource automatisch gesetzt: {resource_url}. "
-            "Falls noch eine alte Karte sichtbar ist: Dashboard neu öffnen, Browser/App hart neu laden "
+            f"Dashboard-Ressource automatisch eingerichtet: {resource_url}. "
+            "Falls noch eine alte Karte sichtbar ist: Dashboard neu öffnen, Browser oder App vollständig neu laden "
             "oder den Browser-Cache leeren."
         )
 
@@ -434,8 +434,8 @@ class JarvisUpdaterCoordinator(DataUpdateCoordinator[JarvisManifest]):
         persistent_notification.async_create(
             self.hass,
             f"{result}\n\nResource: {resource_url}\n\n"
-            "Hinweis: Wenn der Browser noch eine alte Jarvis Cards Version zeigt, bitte Dashboard neu öffnen, "
-            "Browser/App hart neu laden oder den Cache leeren.",
+            "Hinweis: Wenn noch eine ältere Version der JustSmart Cards angezeigt wird, bitte Dashboard neu öffnen, "
+            "Browser oder App vollständig neu laden oder den Cache leeren.",
             title=title,
             notification_id=f"{DOMAIN}_cache_hint",
         )

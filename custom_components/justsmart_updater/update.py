@@ -18,28 +18,28 @@ from .const import (
     ATTR_RESOURCE_URL,
     DOMAIN,
 )
-from .coordinator import JarvisUpdaterCoordinator
+from .coordinator import JustSmartUpdaterCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator: JarvisUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([JarvisCardsUpdateEntity(coordinator, entry)])
+    coordinator: JustSmartUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([JustSmartCardsUpdateEntity(coordinator, entry)])
 
 
-class JarvisCardsUpdateEntity(CoordinatorEntity[JarvisUpdaterCoordinator], UpdateEntity):
-    """Update entity for Jarvis Cards."""
+class JustSmartCardsUpdateEntity(CoordinatorEntity[JustSmartUpdaterCoordinator], UpdateEntity):
+    """Update entity for JustSmart Cards."""
 
     _attr_has_entity_name = True
     _attr_name = "Cards"
     _attr_supported_features = UpdateEntityFeature.INSTALL
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._entry = entry
-        self._attr_unique_id = f"{entry.entry_id}_jarvis_cards_update"
+        self._attr_unique_id = f"{entry.entry_id}_justsmart_cards_update"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Jarvis Cards Updater",
+            "name": "JustSmart Cards Updater",
             "manufacturer": "JustSmart",
         }
 

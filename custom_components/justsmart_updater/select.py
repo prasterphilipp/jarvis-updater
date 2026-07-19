@@ -7,27 +7,27 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import JarvisUpdaterCoordinator
+from .coordinator import JustSmartUpdaterCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator: JarvisUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([JarvisRollbackSelect(coordinator, entry)])
+    coordinator: JustSmartUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities([JustSmartRollbackSelect(coordinator, entry)])
 
 
-class JarvisRollbackSelect(CoordinatorEntity[JarvisUpdaterCoordinator], SelectEntity):
+class JustSmartRollbackSelect(CoordinatorEntity[JustSmartUpdaterCoordinator], SelectEntity):
     """Select a local backup that should be restored by the rollback button."""
 
     _attr_has_entity_name = True
     _attr_name = "Rollback-Version"
     _attr_icon = "mdi:history"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_rollback_version"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Jarvis Cards Updater",
+            "name": "JustSmart Cards Updater",
             "manufacturer": "JustSmart",
         }
 

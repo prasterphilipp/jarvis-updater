@@ -7,32 +7,32 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import JarvisUpdaterCoordinator
+from .coordinator import JustSmartUpdaterCoordinator
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    coordinator: JarvisUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: JustSmartUpdaterCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
         [
-            JarvisInstalledVersionSensor(coordinator, entry),
-            JarvisAvailableVersionSensor(coordinator, entry),
-            JarvisCustomerSensor(coordinator, entry),
-            JarvisLicenseStatusSensor(coordinator, entry),
-            JarvisChangelogSensor(coordinator, entry),
-            JarvisCacheHintSensor(coordinator, entry),
+            JustSmartInstalledVersionSensor(coordinator, entry),
+            JustSmartAvailableVersionSensor(coordinator, entry),
+            JustSmartCustomerSensor(coordinator, entry),
+            JustSmartLicenseStatusSensor(coordinator, entry),
+            JustSmartChangelogSensor(coordinator, entry),
+            JustSmartCacheHintSensor(coordinator, entry),
         ]
     )
 
 
-class _JarvisSensor(CoordinatorEntity[JarvisUpdaterCoordinator], SensorEntity):
+class _JustSmartSensor(CoordinatorEntity[JustSmartUpdaterCoordinator], SensorEntity):
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry, suffix: str) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry, suffix: str) -> None:
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_{suffix}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
-            "name": "Jarvis Cards Updater",
+            "name": "JustSmart Cards Updater",
             "manufacturer": "JustSmart",
         }
 
@@ -40,11 +40,11 @@ class _JarvisSensor(CoordinatorEntity[JarvisUpdaterCoordinator], SensorEntity):
         await self.coordinator.async_request_refresh()
 
 
-class JarvisInstalledVersionSensor(_JarvisSensor):
+class JustSmartInstalledVersionSensor(_JustSmartSensor):
     _attr_name = "Installierte Version"
     _attr_icon = "mdi:package-check"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "installed_version")
 
     @property
@@ -59,11 +59,11 @@ class JarvisInstalledVersionSensor(_JarvisSensor):
         }
 
 
-class JarvisAvailableVersionSensor(_JarvisSensor):
+class JustSmartAvailableVersionSensor(_JustSmartSensor):
     _attr_name = "Verfügbare Version"
     _attr_icon = "mdi:package-up"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "available_version")
 
     @property
@@ -87,11 +87,11 @@ class JarvisAvailableVersionSensor(_JarvisSensor):
         }
 
 
-class JarvisCustomerSensor(_JarvisSensor):
+class JustSmartCustomerSensor(_JustSmartSensor):
     _attr_name = "Kunde"
     _attr_icon = "mdi:account-badge"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "customer")
 
     @property
@@ -101,11 +101,11 @@ class JarvisCustomerSensor(_JarvisSensor):
         return "unbekannt"
 
 
-class JarvisLicenseStatusSensor(_JarvisSensor):
+class JustSmartLicenseStatusSensor(_JustSmartSensor):
     _attr_name = "Lizenzstatus"
     _attr_icon = "mdi:license"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "license_status")
 
     @property
@@ -126,11 +126,11 @@ class JarvisLicenseStatusSensor(_JarvisSensor):
         }
 
 
-class JarvisChangelogSensor(_JarvisSensor):
+class JustSmartChangelogSensor(_JustSmartSensor):
     _attr_name = "Changelog"
     _attr_icon = "mdi:text-box-outline"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "changelog")
 
     @property
@@ -151,11 +151,11 @@ class JarvisChangelogSensor(_JarvisSensor):
         }
 
 
-class JarvisCacheHintSensor(_JarvisSensor):
+class JustSmartCacheHintSensor(_JustSmartSensor):
     _attr_name = "Browser-Cache-Hinweis"
     _attr_icon = "mdi:cached"
 
-    def __init__(self, coordinator: JarvisUpdaterCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: JustSmartUpdaterCoordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "cache_hint")
 
     @property

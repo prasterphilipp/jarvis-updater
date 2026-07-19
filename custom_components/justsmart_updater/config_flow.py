@@ -9,14 +9,14 @@ from aiohttp import ClientSession
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import JarvisAuthError, JarvisUpdateClient, JarvisUpdaterError
+from .api import JustSmartAuthError, JustSmartUpdateClient, JustSmartUpdaterError
 from .const import CONF_CHANNEL, CONF_LICENSE_KEY, CONF_UPDATE_URL, DEFAULT_CHANNEL, DEFAULT_UPDATE_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class JarvisUpdaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow for Jarvis Cards Updater."""
+class JustSmartUpdaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for JustSmart Cards Updater."""
 
     VERSION = 1
 
@@ -28,17 +28,17 @@ class JarvisUpdaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_CHANNEL] = str(user_input.get(CONF_CHANNEL) or DEFAULT_CHANNEL)
             try:
                 manifest = await self._async_validate(user_input)
-            except JarvisAuthError:
+            except JustSmartAuthError:
                 errors["base"] = "invalid_license"
-            except JarvisUpdaterError:
+            except JustSmartUpdaterError:
                 errors["base"] = "cannot_connect"
             except Exception:  # noqa: BLE001 - Home Assistant config flows should not leak traces to users
-                _LOGGER.exception("Unexpected error validating Jarvis license")
+                _LOGGER.exception("Unexpected error validating JustSmart license")
                 errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(f"jarvis-cards-{manifest.channel}")
+                await self.async_set_unique_id(f"justsmart-cards-{manifest.channel}")
                 self._abort_if_unique_id_configured(updates=user_input)
-                title = f"Jarvis Cards ({manifest.channel})"
+                title = f"JustSmart Cards ({manifest.channel})"
                 return self.async_create_entry(title=title, data=user_input)
 
         return self.async_show_form(
@@ -55,5 +55,5 @@ class JarvisUpdaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _async_validate(self, user_input: dict[str, Any]):
         session: ClientSession = async_get_clientsession(self.hass)
-        client = JarvisUpdateClient(session, user_input)
+        client = JustSmartUpdateClient(session, user_input)
         return await client.async_get_manifest()

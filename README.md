@@ -1,8 +1,8 @@
-# Jarvis Cards Updater
+# JustSmart Cards Updater
 
-Public HACS repository for the Jarvis Cards Updater Home Assistant integration.
+Public HACS repository for the JustSmart Cards Updater Home Assistant integration.
 
-This repository contains only the updater integration. The premium Jarvis Cards bundle is not shipped in this repository. After setup, the integration downloads licensed releases from the JustSmart/Jarvis update server and installs the card bundle locally in Home Assistant.
+This repository contains only the updater integration. The premium JustSmart Cards bundle is not shipped in this repository. After setup, the integration downloads licensed releases from the JustSmart update server and installs the card bundle locally in Home Assistant.
 
 ## Install via HACS
 
@@ -11,13 +11,13 @@ This repository contains only the updater integration. The premium Jarvis Cards 
 3. Add this repository URL:
 
    ```text
-   https://github.com/prasterphilipp/jarvis-updater
+   https://github.com/prasterphilipp/justsmart-updater
    ```
 
 4. Select category "Integration".
-5. Install "Jarvis Cards Updater".
+5. Install "JustSmart Cards Updater".
 6. Restart Home Assistant.
-7. Go to Settings -> Devices and services -> Add integration -> Jarvis Cards Updater.
+7. Go to Settings -> Devices and services -> Add integration -> JustSmart Cards Updater.
 8. Enter your license key.
 
 ## What it installs
@@ -25,19 +25,19 @@ This repository contains only the updater integration. The premium Jarvis Cards 
 The updater writes the licensed card bundle to the Home Assistant `www` folder:
 
 ```text
-/www/jarvis/jarvis-cards.js
+/www/justsmart/justsmart-cards.js
 ```
 
 Home Assistant serves that file as:
 
 ```text
-/local/jarvis/jarvis-cards.js
+/local/justsmart/justsmart-cards.js
 ```
 
-The integration creates/updates the Lovelace module resource automatically with a cache-busting version. It updates both Home Assistant's live Lovelace resource collection and the persistent `.storage/lovelace_resources` data so the entry survives reloads/restarts. Existing Jarvis resource entries are recognized when they point to old local, GitHub/jsDelivr, or other `jarvis-cards...js` URLs, for example:
+The integration creates/updates the Lovelace module resource automatically with a cache-busting version. It updates both Home Assistant's live Lovelace resource collection and the persistent `.storage/lovelace_resources` data so the entry survives reloads/restarts. Existing JustSmart resource entries are recognized when they point to old local, GitHub/jsDelivr, or other `justsmart-cards...js` URLs, for example:
 
 ```text
-/local/jarvis/jarvis-cards.js?v=1.0.1
+/local/justsmart/justsmart-cards.js?v=1.0.1
 ```
 
 If a browser still shows an older card after update or rollback, reopen the dashboard, hard-reload the browser/app, or clear the browser cache. Home Assistant also gets a persistent notification with the current resource URL after each install/rollback.
@@ -47,32 +47,32 @@ If a browser still shows an older card after update or rollback, reopen the dash
 After setup Home Assistant creates entities similar to:
 
 ```text
-update.jarvis_cards_cards
-button.jarvis_cards_update_installieren
-button.jarvis_cards_update_prufen
-button.jarvis_cards_rollback_ausfuhren
-select.jarvis_cards_rollback_version
-sensor.jarvis_cards_installierte_version
-sensor.jarvis_cards_verfugbare_version
-sensor.jarvis_cards_kunde
-sensor.jarvis_cards_lizenzstatus
-sensor.jarvis_cards_changelog
-sensor.jarvis_cards_browser_cache_hinweis
+update.justsmart_cards_cards
+button.justsmart_cards_update_installieren
+button.justsmart_cards_update_prufen
+button.justsmart_cards_rollback_ausfuhren
+select.justsmart_cards_rollback_version
+sensor.justsmart_cards_installierte_version
+sensor.justsmart_cards_verfugbare_version
+sensor.justsmart_cards_kunde
+sensor.justsmart_cards_lizenzstatus
+sensor.justsmart_cards_changelog
+sensor.justsmart_cards_browser_cache_hinweis
 ```
 
 Exact entity IDs can vary depending on your Home Assistant naming scheme.
 
 ## Rollback
 
-Every update backs up the previously installed `/www/jarvis/jarvis-cards.js` into `/www/jarvis/backups`.
+Every update backs up the previously installed `/www/justsmart/justsmart-cards.js` into `/www/justsmart/backups`.
 
 To roll back:
 
-1. Select the desired backup in `select.jarvis_cards_rollback_version`.
-2. Press `button.jarvis_cards_rollback_ausfuhren`.
+1. Select the desired backup in `select.justsmart_cards_rollback_version`.
+2. Press `button.justsmart_cards_rollback_ausfuhren`.
 3. Reload the dashboard/browser if Home Assistant still shows the old cached JavaScript.
 
-Before rollback, the currently installed file is copied to `/www/jarvis/backups/pre-rollback` so it can still be recovered.
+Before rollback, the currently installed file is copied to `/www/justsmart/backups/pre-rollback` so it can still be recovered.
 
 ## License and changelog display
 
@@ -94,5 +94,5 @@ The update entity and sensors expose metadata returned by the update server:
 ## Development check
 
 ```bash
-python3 -m py_compile custom_components/jarvis_updater/*.py
+python3 -m py_compile custom_components/justsmart_updater/*.py
 ```

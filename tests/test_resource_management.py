@@ -64,7 +64,7 @@ def _install_homeassistant_stubs() -> None:
 
 _install_homeassistant_stubs()
 
-from custom_components.jarvis_updater.coordinator import JarvisUpdaterCoordinator  # noqa: E402
+from custom_components.justsmart_updater.coordinator import JustSmartUpdaterCoordinator  # noqa: E402
 
 
 class FakeResourceCollection:
@@ -104,7 +104,7 @@ class FakeResourceCollection:
 
 
 def _coordinator_with_collection(collection):
-    coord = JarvisUpdaterCoordinator.__new__(JarvisUpdaterCoordinator)
+    coord = JustSmartUpdaterCoordinator.__new__(JustSmartUpdaterCoordinator)
     coord.hass = types.SimpleNamespace(data={"lovelace": types.SimpleNamespace(resources=collection)})
     return coord
 
@@ -119,27 +119,27 @@ def test_finds_modern_lovelace_dataclass_resource_collection():
 def test_updates_live_collection_items_not_resource_count_only():
     collection = FakeResourceCollection(
         [
-            {"id": "jarvis-old", "url": "/local/jarvis/jarvis-cards.js?v=1.0.1", "type": "module"},
-            {"id": "duplicate", "url": "https://cdn.example/jarvis-cards.js", "type": "module"},
+            {"id": "justsmart-old", "url": "/local/justsmart/justsmart-cards.js?v=1.0.1", "type": "module"},
+            {"id": "duplicate", "url": "https://cdn.example/justsmart-cards.js", "type": "module"},
             {"id": "other", "url": "/local/other-card.js", "type": "module"},
         ]
     )
     coord = _coordinator_with_collection(collection)
 
-    ok = asyncio.run(coord._async_update_lovelace_resource_collection("/local/jarvis/jarvis-cards.js?v=1.0.25"))
+    ok = asyncio.run(coord._async_update_lovelace_resource_collection("/local/justsmart/justsmart-cards.js?v=1.0.25"))
 
     assert ok is True
-    assert collection.updated == [("jarvis-old", {"url": "/local/jarvis/jarvis-cards.js?v=1.0.25", "res_type": "module"})]
+    assert collection.updated == [("justsmart-old", {"url": "/local/justsmart/justsmart-cards.js?v=1.0.25", "res_type": "module"})]
     assert collection.deleted == ["duplicate"]
-    assert [item["id"] for item in collection.items] == ["jarvis-old", "other"]
-    assert collection.items[0]["url"] == "/local/jarvis/jarvis-cards.js?v=1.0.25"
+    assert [item["id"] for item in collection.items] == ["justsmart-old", "other"]
+    assert collection.items[0]["url"] == "/local/justsmart/justsmart-cards.js?v=1.0.25"
 
 
-def test_creates_resource_when_no_jarvis_entry_exists():
+def test_creates_resource_when_no_justsmart_entry_exists():
     collection = FakeResourceCollection([{"id": "other", "url": "/local/other-card.js", "type": "module"}])
     coord = _coordinator_with_collection(collection)
 
-    ok = asyncio.run(coord._async_update_lovelace_resource_collection("/local/jarvis/jarvis-cards.js?v=1.0.25"))
+    ok = asyncio.run(coord._async_update_lovelace_resource_collection("/local/justsmart/justsmart-cards.js?v=1.0.25"))
 
     assert ok is True
-    assert collection.created == [{"url": "/local/jarvis/jarvis-cards.js?v=1.0.25", "res_type": "module"}]
+    assert collection.created == [{"url": "/local/justsmart/justsmart-cards.js?v=1.0.25", "res_type": "module"}]
