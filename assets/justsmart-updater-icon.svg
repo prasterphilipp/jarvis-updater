@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="surface" x1="82" y1="58" x2="438" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#171A31"/>
+      <stop offset="0.5" stop-color="#0C1021"/>
+      <stop offset="1" stop-color="#070A13"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="120" y1="112" x2="404" y2="414" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B7CFF"/>
+      <stop offset="0.48" stop-color="#6477FF"/>
+      <stop offset="1" stop-color="#27D7C4"/>
+    </linearGradient>
+    <linearGradient id="accentSoft" x1="190" y1="144" x2="342" y2="370" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.52" stop-color="#F5F7FF"/>
+      <stop offset="1" stop-color="#CFFDF6"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientTransform="translate(130 92) rotate(47) scale(294 265)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8175FF" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#8175FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientTransform="translate(405 406) rotate(-135) scale(205)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#20D7BE" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#20D7BE" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#050712" flood-opacity="0.48"/>
+    </filter>
+    <filter id="accentGlow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <clipPath id="squircle">
+      <rect x="16" y="16" width="480" height="480" rx="118"/>
+    </clipPath>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="16" y="16" width="480" height="480" rx="118" fill="url(#surface)"/>
+    <g clip-path="url(#squircle)">
+      <rect x="16" y="16" width="480" height="480" fill="url(#glowA)"/>
+      <rect x="16" y="16" width="480" height="480" fill="url(#glowB)"/>
+      <path d="M-20 392C104 298 165 452 301 355C387 294 437 289 540 328V540H-20V392Z" fill="#FFFFFF" fill-opacity="0.018"/>
+    </g>
+    <rect x="17" y="17" width="478" height="478" rx="117" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="2"/>
+    <path d="M76 149C93 91 135 56 194 42" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Two clean update arcs form a protective orbit around the monogram. -->
+  <g filter="url(#accentGlow)" stroke="url(#accent)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M151 179C177 128 231 98 288 104C326 108 360 125 386 151"/>
+    <path d="M385 151L384 106"/>
+    <path d="M385 151L340 150"/>
+
+    <path d="M361 337C332 386 277 413 219 403C182 397 149 378 126 350"/>
+    <path d="M126 350L126 396"/>
+    <path d="M126 350L171 352"/>
+  </g>
+
+  <!-- Distinctive JustSmart J: solid, friendly and readable even at small sizes. -->
+  <path d="M300 157V289C300 353 265 382 211 382C177 382 149 369 129 346L167 307C180 321 193 328 210 328C232 328 243 316 243 288V157H300Z" fill="url(#accentSoft)"/>
+  <rect x="243" y="126" width="57" height="31" rx="15.5" fill="url(#accent)"/>
+
+  <!-- Small smart-status spark. -->
+  <circle cx="341" cy="258" r="19" fill="#28D8C2"/>
+  <circle cx="341" cy="258" r="8" fill="#E8FFFB"/>
+</svg>

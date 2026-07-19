@@ -1,5 +1,9 @@
 # JustSmart Cards Updater
 
+<p align="center">
+  <img src="custom_components/justsmart_updater/brand/icon@2x.png" alt="JustSmart Cards Updater" width="144">
+</p>
+
 Public HACS repository for the JustSmart Cards Updater Home Assistant integration.
 
 This repository contains only the updater integration. The premium JustSmart Cards bundle is not shipped in this repository. After setup, the integration downloads licensed releases from the JustSmart update server and installs the card bundle locally in Home Assistant.
